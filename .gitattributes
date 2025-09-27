@@ -1,0 +1,19 @@
+# Normalize text files to LF (works well for Linux dev and Linux containers)
+* text=auto eol=lf
+
+# Keep images/binaries as-is
+*.png -text
+*.jpg -text
+*.jpeg -text
+*.gif -text
+*.pdf -text
+*.ico -text
+
+# Ensure scripts stay LF
+*.sh text eol=lf
+*.py text eol=lf
+*.sql text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.json text eol=lf

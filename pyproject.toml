@@ -1,27 +1,52 @@
+[build-system]
+requires = ["hatchling>=1.18.0"]
+build-backend = "hatchling.build"
+
 [project]
 name = "tunescout"
 version = "0.1.0"
-description = "Music discovery recommendation system"
-readme = "README.md"
+description = "TuneScout Python project"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
-    "sqlalchemy>=2.0",
-    "psycopg[binary]>=3.2",
-    "alembic>=1.12.0",
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
-    "httpx>=0.25.0",
-    "sentence-transformers>=2.2.0",
-    "pgvector>=0.2.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.13.0",
+    "psycopg[binary]>=3.1.0",
+    "supabase>=2.3.0",
     "redis>=5.0.0",
-    "apscheduler>=3.10.0",
-    "sendgrid>=6.10.0",
     "jinja2>=3.1.0",
     "python-multipart>=0.0.6",
-    "supabase>=2.0.0",
-    "email-validator>=2.2.0",
-    "spotipy>=2.25.1",
-    "schedule>=1.2.0",
+    "spotipy>=2.22.0",
+    "sentence-transformers>=2.2.0",
+    "pgvector>=0.2.0",
+    "sendgrid>=6.10.0",
+    "requests>=2.32.5",
+    "beautifulsoup4>=4.13.4",
+    "google-generativeai>=0.8.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tunescout"]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra"
+testpaths = ["test"]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "pytest>=8.4.1",
+    "ruff>=0.12.9",
 ]

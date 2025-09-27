@@ -1,97 +1,91 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TuneScout - ダッシュボード</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: #f8fafc;
-        }
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .logout-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        .content {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TuneScout - ダッシュボード</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-    <div class="header">
-        <h1>🎵 TuneScout Dashboard</h1>
-        <div class="user-info">
-            <span id="user-email">Loading...</span>
-            <button class="logout-btn" onclick="signOut()">ログアウト</button>
+  <main class="shell">
+    <header class="panel topbar">
+      <div class="brand">
+        <img src="/static/logo.svg" alt="" onerror="this.style.display='none'" />
+        <span>🎵 TuneScout Dashboard</span>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span id="user-email" class="muted">Loading...</span>
+        <button id="theme-toggle" class="icon-btn" type="button" aria-pressed="false"><span aria-hidden="true">🌗</span><span class="label">ダーク</span></button>
+        <button class="logout-btn" onclick="signOut()">ログアウト</button>
+      </div>
+    </header>
+
+    <section class="panel wrap">
+      <div class="grid">
+        <div class="card">
+          <h2 style="margin:0 0 6px;">ようこそ！</h2>
+          <p class="muted" style="margin:0;">TuneScoutへようこそ。新しい音楽を発見しましょう。</p>
         </div>
-    </div>
-
-    <div class="content">
-        <h2>ようこそ！</h2>
-        <p>TuneScoutへようこそ。新しい音楽を発見しましょう。</p>
-        
-        <div id="user-details">
-            <h3>ユーザー情報</h3>
-            <pre id="user-json"></pre>
+        <div class="card">
+          <h3 style="margin:0 0 6px;">ユーザー情報</h3>
+          <pre id="user-json"></pre>
         </div>
-    </div>
+      </div>
+    </section>
+  </main>
 
-    <script>
-        const { createClient } = supabase;
-
-        const supabaseClient = createClient(
-            '{{ supabase_url }}',
-            '{{ supabase_key }}'
-        );
-
-        // 認証状態をチェック
-        async function checkAuth() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            
-            if (!session) {
-                window.location.href = '/auth';
-                return;
-            }
-
-            // ユーザー情報を表示
-            document.getElementById('user-email').textContent = session.user.email;
-            document.getElementById('user-json').textContent = JSON.stringify(session.user, null, 2);
+  <script>
+    // Theme toggle (共通)
+    (function() {
+      const KEY = 'ts-theme';
+      function apply(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        const btn = document.getElementById('theme-toggle');
+        if (btn) {
+          const isDark = theme === 'dark';
+          btn.setAttribute('aria-pressed', String(isDark));
+          const label = btn.querySelector('.label');
+          if (label) label.textContent = isDark ? 'ライト' : 'ダーク';
         }
+      }
+      const saved = localStorage.getItem(KEY);
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      apply(saved || (prefersDark ? 'dark' : 'light'));
+      document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('theme-toggle');
+        if (!btn) return;
+        btn.addEventListener('click', function() {
+          const cur = document.documentElement.getAttribute('data-theme') || 'light';
+          const next = cur === 'dark' ? 'light' : 'dark';
+          localStorage.setItem(KEY, next);
+          apply(next);
+        });
+      });
+    })();
+  </script>
 
-        // ログアウト
-        async function signOut() {
-            await supabaseClient.auth.signOut();
-            window.location.href = '/auth';
-        }
+  <script>
+    const { createClient } = supabase;
+    const supabaseClient = createClient(
+      '{{ supabase_url }}',
+      '{{ supabase_key }}'
+    );
 
-        // ページ読み込み時に認証チェック
-        checkAuth();
-    </script>
+    async function checkAuth() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) { window.location.href = '/auth'; return; }
+      document.getElementById('user-email').textContent = session.user.email;
+      document.getElementById('user-json').textContent = JSON.stringify(session.user, null, 2);
+    }
+
+    async function signOut() {
+      await supabaseClient.auth.signOut();
+      window.location.href = '/auth';
+    }
+
+    checkAuth();
+  </script>
 </body>
 </html>

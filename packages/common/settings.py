@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     
     # Database
     database_url: str = ""
+    database_url_pooler: str = ""
+    supabase_region: str = ""
     supabase_project_ref: str = ""
     supabase_db_user: str = ""
     supabase_db_name: str = ""
@@ -29,6 +31,10 @@ class Settings(BaseSettings):
 
     market: str = "JP"
     limit: int = 50
+
+    # Gemini / Google Generative AI
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-1.5-flash"
     
     class Config:
         env_file = ".env"

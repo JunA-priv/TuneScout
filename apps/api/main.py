@@ -5,7 +5,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
-from .routers import auth, recommendations, artists, webhooks
+from .routers import auth, recommendations, webhooks
+from apps.api.routers import artists
 from packages.common.settings import settings
 
 app = FastAPI(title="TuneScout", description="Music Discovery Recommendation System")
@@ -22,11 +23,15 @@ app.add_middleware(
 # プロジェクトルートからの相対パス
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 template_dir = os.path.join(base_dir, "templates")
+static_dir = os.path.join(base_dir, "static")
 print(f"Base directory: {base_dir}")
 print(f"Template directory: {template_dir}")
 print(f"Template directory exists: {os.path.exists(template_dir)}")
 
 templates = Jinja2Templates(directory=template_dir)
+
+# /static をマウント（ロゴ・favicon 等の配信）
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(recommendations.router, prefix="/recommendations", tags=["recommendations"])

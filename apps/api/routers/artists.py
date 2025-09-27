@@ -1,21 +1,42 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
-from uuid import UUID
+from fastapi import APIRouter, HTTPException
+from typing import List, Dict, Any
+from pydantic import BaseModel
+from apps.services.artist_service import ArtistService
 
-from packages.common.db import get_db, Artist
+router = APIRouter(prefix="/artists", tags=["artists"])
 
-router = APIRouter()
-templates = Jinja2Templates(directory="templates")
+class ArtistSearchRequest(BaseModel):
+    query: str
 
-@router.get("/{artist_id}", response_class=HTMLResponse)
-async def get_artist_detail(artist_id: UUID, request: Request, db: Session = Depends(get_db)):
-    artist = db.query(Artist).filter(Artist.id == artist_id).first()
+class ArtistRegisterRequest(BaseModel):
+    spotify_id: str
+
+class ScrapingRegisterRequest(BaseModel):
+    spotify_ids: List[str]
+
+@router.post("/search")
+async def search_artist_with_gemini(request: ArtistSearchRequest) -> List[Dict[str, Any]]:
+    """Gemini APIでアーティスト検索"""
+    service = ArtistService()
+    return await service.search_with_gemini(request.query)
+
+@router.post("/register")
+async def register_artist_manual(request: ArtistRegisterRequest) -> Dict[str, Any]:
+    """手動登録: 登録ボタン押下時の処理"""
+    service = ArtistService()
+    return await service.register_manual(request.spotify_id)
+
+@router.post("/scraping/register")
+async def register_from_scraping(request: ScrapingRegisterRequest) -> List[Dict[str, Any]]:
+    """スクレイピング処理による一括登録"""
+    service = ArtistService()
+    return await service.register_from_scraping(request.spotify_ids)
+
+@router.get("/{spotify_id}")
+async def get_artist(spotify_id: str) -> Dict[str, Any]:
+    """アーティスト詳細取得"""
+    service = ArtistService()
+    artist = await service.db_service.get_artist_by_spotify_id(spotify_id)
     if not artist:
         raise HTTPException(status_code=404, detail="Artist not found")
-    
-    return templates.TemplateResponse("artist_detail.html", {
-        "request": request,
-        "artist": artist
-    })
+    return artist

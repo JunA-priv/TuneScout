@@ -18,7 +18,7 @@
 - **メール**: SendGrid
 - **認証**: Supabase Auth
 
-## セットアップ
+## セットアップ（Ubuntu 開発環境）
 
 1. Supabaseプロジェクト作成:
    - [Supabase](https://supabase.com)でプロジェクト作成
@@ -30,19 +30,30 @@ cp .env.example .env
 # .envファイルを編集してSupabase URLとキーを設定
 ```
 
-3. 依存関係インストール:
+3. 依存関係インストール（ローカル Ubuntu）:
 ```bash
 uv sync
 ```
 
-4. データベースマイグレーション:
+4. 依存ミドルウェア（DB/Redis）をDockerで起動:
+```bash
+# APIはローカルで実行、DBとRedisだけDockerで起動
+docker compose up -d db redis
+```
+
+5. データベースマイグレーション:
 ```bash
 uv run alembic upgrade head
 ```
 
-5. 開発サーバー起動:
+6. 開発サーバー起動（ホストのUbuntuで実行）:
 ```bash
 uv run uvicorn apps.api.main:app --reload
+```
+
+補足: API も Docker コンテナでホットリロードしたい場合は以下。
+```bash
+docker compose -f compose.yaml -f compose.dev.yaml up --build api
 ```
 
 ## API エンドポイント
@@ -70,6 +81,28 @@ uv run alembic revision --autogenerate -m "description"
 # マイグレーション実行
 uv run alembic upgrade head
 ```
+
+## 実行（Windows + Docker Desktop）
+
+Windows では Docker Desktop 上でコンテナを実行することを想定しています。
+
+- `compose.yaml` は本番寄り（コードのバインドマウント無し、イメージ内の依存関係を使用）
+- 必要なら環境変数は `.env` または `compose.yaml` の `environment` を利用
+
+```powershell
+docker compose up --build -d
+
+# ログ確認
+docker compose logs -f api
+```
+
+開発用のホットリロードを有効にする場合は、`compose.dev.yaml` を併用してください（Ubuntu/WSL でも同様）。
+
+```powershell
+docker compose -f compose.yaml -f compose.dev.yaml up --build
+```
+
+注意: Windows ホストでボリュームマウント（`.:/app`）を使うと、イメージビルド時に作成された仮想環境が隠蔽されます。上記のように本番寄り設定（バインドマウント無し）で実行することで、この問題を回避しています。
 
 ## Supabase設定
 

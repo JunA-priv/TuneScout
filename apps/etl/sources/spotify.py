@@ -58,53 +58,27 @@ class SpotifyClient:
             response.raise_for_status()
             return response.json()
     
-    async def get_related_artists(self, artist_id: str) -> List[Dict]:
-        """Get related artists"""
+
+    
+
+    
+    async def search_artists_by_name(self, artist_name: str, limit: int = 10) -> List[Dict]:
+        """Search artists by name"""
         if not self.access_token:
             await self.get_access_token()
             
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"https://api.spotify.com/v1/artists/{artist_id}/related-artists",
-                headers={"Authorization": f"Bearer {self.access_token}"}
-            )
-            if response.status_code == 404:
-                print(f"関連アーティストが見つかりません（アーティストID: {artist_id}）")
-                return []
-            response.raise_for_status()
-            return response.json()["artists"]
-    
-    async def get_filtered_related_artists(self, artist_id: str, min_popularity: int = 2, max_popularity: int = 24) -> List[Dict]:
-        """Get related artists filtered by popularity range"""
-        related_artists = await self.get_related_artists(artist_id)
-        return [artist for artist in related_artists if min_popularity <= artist.get("popularity", 0) <= max_popularity]
-    
-    async def search_similar_artists_by_genre(self, artist_id: str, limit: int = 20) -> List[Dict]:
-        """Search similar artists by genre when related artists are not available"""
-        if not self.access_token:
-            await self.get_access_token()
-            
-        # Get original artist info
-        artist_info = await self.get_artist_info(artist_id)
-        genres = artist_info.get("genres", [])
-        
-        if not genres:
-            return []
-            
-        # Search by first genre
-        search_query = f"genre:{genres[0]}"
-        
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 "https://api.spotify.com/v1/search",
                 headers={"Authorization": f"Bearer {self.access_token}"},
-                params={"q": search_query, "type": "artist", "limit": limit}
+                params={"q": f"artist:{artist_name}", "type": "artist", "limit": limit}
             )
-            if response.status_code == 200:
-                artists = response.json().get("artists", {}).get("items", [])
-                # Exclude the original artist
-                return [a for a in artists if a["id"] != artist_id]
-            return []
+            response.raise_for_status()
+            return response.json()["artists"]["items"]
+    
+
+    
+
 
 async def sync_yesterday_releases() -> List[Dict]:
     """日本のアルバム情報を取得し、指定条件のアーティストを返す"""

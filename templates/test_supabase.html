@@ -1,46 +1,61 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supabase接続テスト</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase接続テスト</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-    <h1>Supabase接続テスト</h1>
-    <div id="status">テスト中...</div>
-    <div id="details"></div>
+  <main class="shell">
+    <header class="panel topbar">
+      <div class="brand">
+        <img src="/static/logo.svg" alt="" onerror="this.style.display='none'" />
+        <span>🎵 TuneScout</span>
+      </div>
+      <button id="theme-toggle" class="icon-btn" type="button" aria-pressed="false"><span aria-hidden="true">🌗</span><span class="label">ダーク</span></button>
+    </header>
+    <section class="panel wrap">
+      <h1 style="margin-top:0">Supabase接続テスト</h1>
+      <div class="grid">
+        <div class="card"><strong>状態:</strong> <span id="status">テスト中...</span></div>
+        <div class="card"><div id="details"></div></div>
+      </div>
+    </section>
+  </main>
 
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script>
-        const { createClient } = supabase;
-        
-        console.log('Supabase URL:', '{{ supabase_url }}');
-        console.log('Supabase Key:', '{{ supabase_key }}');
-        
-        try {
-            const supabaseClient = createClient(
-                '{{ supabase_url }}',
-                '{{ supabase_key }}'
-            );
-            
-            document.getElementById('status').innerHTML = 'Supabaseクライアント作成成功';
-            document.getElementById('details').innerHTML = `
-                <p>URL: {{ supabase_url }}</p>
-                <p>Key: {{ supabase_key }}</p>
-            `;
-            
-            // 接続テスト
-            supabaseClient.auth.getSession().then(({ data, error }) => {
-                if (error) {
-                    document.getElementById('status').innerHTML = 'エラー: ' + error.message;
-                } else {
-                    document.getElementById('status').innerHTML = '接続成功！';
-                }
-            });
-            
-        } catch (error) {
-            document.getElementById('status').innerHTML = 'クライアント作成エラー: ' + error.message;
-        }
-    </script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    const { createClient } = supabase;
+    try {
+      const supabaseClient = createClient('{{ supabase_url }}', '{{ supabase_key }}');
+      document.getElementById('status').textContent = 'Supabaseクライアント作成成功';
+      document.getElementById('details').innerHTML = `<p>URL: {{ supabase_url }}</p><p>Key: {{ supabase_key }}</p>`;
+      supabaseClient.auth.getSession().then(({ data, error }) => {
+        document.getElementById('status').textContent = error ? ('エラー: ' + error.message) : '接続成功！';
+      });
+    } catch (error) {
+      document.getElementById('status').textContent = 'クライアント作成エラー: ' + error.message;
+    }
+  </script>
+  <script>
+    (function(){
+      const KEY='ts-theme';
+      function apply(t){
+        document.documentElement.setAttribute('data-theme',t);
+        const b=document.getElementById('theme-toggle');
+        if(b){const d=t==='dark';b.setAttribute('aria-pressed',String(d));const l=b.querySelector('.label');if(l)l.textContent=d?'ライト':'ダーク';}
+      }
+      const saved=localStorage.getItem(KEY);
+      const prefers=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+      apply(saved||(prefers?'dark':'light'));
+      document.addEventListener('DOMContentLoaded',()=>{
+        const b=document.getElementById('theme-toggle');
+        if(!b) return;
+        b.addEventListener('click',()=>{const cur=document.documentElement.getAttribute('data-theme')||'light';const nxt=cur==='dark'?'light':'dark';localStorage.setItem(KEY,nxt);apply(nxt);});
+      });
+    })();
+  </script>
 </body>
 </html>

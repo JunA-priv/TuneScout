@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  # Dev override: bind mount source and enable reload
+  api:
+    volumes:
+      - .:/app
+    command: uvicorn apps.api.main:app --host 0.0.0.0 --port 8000 --reload

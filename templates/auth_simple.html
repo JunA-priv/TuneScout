@@ -4,99 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TuneScout - 認証</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css" />
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
         .auth-container {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-width: 400px;
+            background: linear-gradient(180deg, var(--glass-strong), rgba(255,255,255,.06));
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,.16);
+            box-shadow: 0 20px 40px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.12);
+            border-radius: 16px;
+            max-width: 480px;
             width: 100%;
+            padding: 24px;
         }
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo h1 {
-            color: #333;
-            margin: 0;
-            font-size: 28px;
-        }
-        .logo p {
-            color: #666;
-            margin: 5px 0 0 0;
-            font-size: 14px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 500;
-        }
+        .auth-logo { text-align: center; margin-bottom: 16px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 6px; }
         input[type="email"], input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-            box-sizing: border-box;
+            width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.2);
+            background: rgba(255,255,255,.08); color: var(--text);
         }
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        button:hover {
-            background: #5a67d8;
-        }
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-        }
-        .tab {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
-            background: #f5f5f5;
-            cursor: pointer;
-            border: none;
-        }
-        .tab.active {
-            background: #667eea;
-            color: white;
-        }
-        .form-container {
-            display: none;
-        }
-        .form-container.active {
-            display: block;
-        }
+        .tabs { display: flex; margin-bottom: 14px; gap: 8px; }
+        .tab { flex: 1; padding: 10px; text-align: center; background: var(--glass); cursor: pointer; border: none; border-radius: 10px; color: var(--text); }
+        .tab.active { background: linear-gradient(135deg, var(--brand-1), var(--brand-2)); color: #0b1020; font-weight: 700; }
+        .form-container { display: none; }
+        .form-container.active { display: block; }
+        button { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--brand-1), var(--brand-2)); color: #0b1020; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; margin-bottom: 10px; font-weight: 700; }
+        button:hover { filter: brightness(1.02); }
+    </style>
+    <style>
+      .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 16px}
+      .brand{display:flex;align-items:center;gap:10px;font-weight:700}
+      .brand img{width:24px;height:24px}
+      .icon-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:var(--glass);color:var(--text);cursor:pointer}
+      .auth-container{background:linear-gradient(180deg,var(--glass-strong),rgba(255,255,255,.06));backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);box-shadow:0 20px 40px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.12)}
+      .tab.active{background:linear-gradient(135deg,var(--brand-1),var(--brand-2))}
+      button{background:linear-gradient(135deg,var(--brand-1),var(--brand-2))}
     </style>
 </head>
 <body>
+  <main class="shell">
+    <div class="topbar panel">
+      <div class="brand">
+        <img src="/static/logo.svg" alt="" onerror="this.style.display='none'"/>
+        <span>🎵 TuneScout</span>
+      </div>
+      <button id="theme-toggle" class="icon-btn" type="button" aria-pressed="false"><span aria-hidden="true">🌗</span><span class="label">ダーク</span></button>
+    </div>
     <div class="auth-container">
-        <div class="logo">
+        <div class="auth-logo">
             <h1>🎵 TuneScout</h1>
-            <p>音楽発掘レコメンドシステム</p>
+            <p class="jp-keep">音楽発掘レコメンドシステム</p>
         </div>
         
         <div class="tabs">
@@ -133,6 +91,7 @@
             </form>
         </div>
     </div>
+  </main>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
@@ -307,6 +266,24 @@
                 });
             }
         });
+    </script>
+    <script>
+      (function(){
+        const KEY='ts-theme';
+        function apply(t){
+          document.documentElement.setAttribute('data-theme',t);
+          const b=document.getElementById('theme-toggle');
+          if(b){const d=t==='dark';b.setAttribute('aria-pressed',String(d));const l=b.querySelector('.label');if(l)l.textContent=d?'ライト':'ダーク';}
+        }
+        const saved=localStorage.getItem(KEY);
+        const prefers=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+        apply(saved||(prefers?'dark':'light'));
+        document.addEventListener('DOMContentLoaded',()=>{
+          const b=document.getElementById('theme-toggle');
+          if(!b) return;
+          b.addEventListener('click',()=>{const cur=document.documentElement.getAttribute('data-theme')||'light';const nxt=cur==='dark'?'light':'dark';localStorage.setItem(KEY,nxt);apply(nxt);});
+        });
+      })();
     </script>
 </body>
 </html>

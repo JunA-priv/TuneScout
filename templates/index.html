@@ -1,37 +1,115 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <title>TuneScout - 音楽発掘</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', 'Noto Sans CJK JP', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .form { background: #f5f5f5; padding: 20px; border-radius: 8px; }
-        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-        .btn:hover { background: #0056b3; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TuneScout - 音楽発掘</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/static/favicon.svg" />
+  <link rel="stylesheet" href="/static/styles.css" />
+  <style>
+    .hero {
+      position: relative;
+      border-radius: 20px;
+      padding: 28px;
+      background: linear-gradient(180deg, var(--glass-strong), rgba(255,255,255,0.06));
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: -40% -40% auto auto;
+      width: 60vw; max-width: 620px; aspect-ratio: 1/1;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), transparent 40%),
+                  radial-gradient(closest-side, rgba(255,255,255,0.08), transparent);
+      filter: blur(20px);
+      transform: translate3d(0,0,0);
+      pointer-events: none;
+    }
+
+    .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card h4 { margin: 0 0 6px; font-size: 15px; }
+    .card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 6px; }
+  </style>
+  <meta name="color-scheme" content="light dark" />
 </head>
 <body>
-    <div class="header">
-        <h1>🎵 TuneScout</h1>
-        <p>メジャーになる前の新人アーティストを発掘</p>
-    </div>
-    
-    <div class="form">
-        <h2>日次音楽レコメンドを受け取る</h2>
-        <a href="/auth" class="btn" style="text-decoration: none; display: inline-block;">始める</a>
-        <p><small>厳選された新鮮で未発掘の音楽を毎日お届けします。</small></p>
-    </div>
-    
-    <div style="margin-top: 40px;">
-        <h3>仕組み:</h3>
-        <ul>
-            <li>🔍 音楽メディアと新譜をスキャン</li>
-            <li>🎯 新人アーティストをフィルタリング（低人気度スコア）</li>
-            <li>📧 パーソナライズされた日次レコメンドを配信</li>
-            <li>🎧 誰よりも早く次のお気に入りアーティストを発見</li>
-        </ul>
-    </div>
+  <main class="shell">
+    <section class="hero" aria-labelledby="app-title">
+      <div class="topbar">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img src="/static/logo.svg" alt="TuneScout" class="logo-img" onerror="this.style.display='none'" />
+          <div class="logo" id="app-title">
+            <span class="logo-emoji">🎵</span> TuneScout
+          </div>
+        </div>
+        <button id="theme-toggle" class="icon-btn" type="button" aria-pressed="false" aria-label="テーマ切替">
+          <span class="icon" aria-hidden="true">🌗</span>
+          <span class="label">ダーク</span>
+        </button>
+      </div>
+      <div class="badge" aria-hidden="true">NEW · 次世代レコメンド</div>
+      <p class="lead">メジャーになる前の新人アーティストを発掘</p>
+
+      <div class="cta">
+        <a class="btn" href="/auth">
+          <span>始める</span>
+          <span aria-hidden="true">→</span>
+        </a>
+        <span class="tip">厳選された未発掘の音楽を毎日お届けします</span>
+      </div>
+    </section>
+
+    <section aria-labelledby="how-title" class="cards">
+      <h3 id="how-title" style="margin:6px 4px 0; font-size:14px; color: var(--muted); letter-spacing:.04em;">仕組み</h3>
+      <div class="grid cols-3" role="list">
+        <article class="card" role="listitem">
+          <h4>🔍 スキャン</h4>
+          <p>音楽メディアや新譜情報を横断的にスキャン。</p>
+        </article>
+        <article class="card" role="listitem">
+          <h4>🎯 フィルタリング</h4>
+          <p>人気度が低く光る新人のみを抽出して追跡。</p>
+        </article>
+        <article class="card" role="listitem">
+          <h4>📧 デリバリー</h4>
+          <p>あなた向けにパーソナライズした日次レコメンドを配信。</p>
+        </article>
+      </div>
+    </section>
+
+    <p class="footer">© TuneScout — Find tomorrow’s favorites today.</p>
+  </main>
+  <script>
+    (function() {
+      const KEY = 'ts-theme';
+      function apply(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        const btn = document.getElementById('theme-toggle');
+        if (btn) {
+          const isDark = theme === 'dark';
+          btn.setAttribute('aria-pressed', String(isDark));
+          const label = btn.querySelector('.label');
+          if (label) label.textContent = isDark ? 'ライト' : 'ダーク';
+        }
+      }
+      const saved = localStorage.getItem(KEY);
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      apply(saved || (prefersDark ? 'dark' : 'light'));
+      document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('theme-toggle');
+        if (!btn) return;
+        btn.addEventListener('click', function() {
+          const cur = document.documentElement.getAttribute('data-theme') || 'light';
+          const next = cur === 'dark' ? 'light' : 'dark';
+          localStorage.setItem(KEY, next);
+          apply(next);
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

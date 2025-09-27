@@ -23,15 +23,16 @@ services:
       dockerfile: docker/api.Dockerfile
     ports:
       - "8000:8000"
+    # Load app settings from .env and service-specific overrides
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=postgresql+psycopg://user:pass@db:5432/music
-      - REDIS_URL=redis://redis:6379
+      DATABASE_URL: postgresql+psycopg://user:pass@db:5432/music
+      REDIS_URL: redis://redis:6379
     depends_on:
       - db
       - redis
-    volumes:
-      - .:/app
-    command: uvicorn apps.api.main:app --host 0.0.0.0 --port 8000 --reload
+    # Production-like run on Windows Docker Desktop uses the image CMD
 
 volumes:
   postgres_data:

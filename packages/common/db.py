@@ -4,6 +4,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
+import os
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 from supabase import create_client, Client
 
 from .settings import settings
@@ -28,17 +30,81 @@ if settings.supabase_url and not settings.supabase_url.startswith('your_'):
         supabase = None
         supabase_admin = None
 
+def _is_truthy_env(name: str) -> bool:
+    v = os.getenv(name, "").strip().lower()
+    return v in {"1", "true", "yes", "on"}
+
+
+def _ensure_sslmode(url: str) -> str:
+    parsed = urlparse(url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    query.setdefault("sslmode", "require")
+    new_qs = urlencode(query)
+    return urlunparse(parsed._replace(query=new_qs))
+
+
+def _build_pooler_url_from_direct(url: str, region: str | None) -> str | None:
+    """Supabaseの直結URL(postgres)からPooler(pgBouncer)URLに変換。
+
+    例: postgresql+psycopg://postgres:pw@db.<ref>.supabase.co:5432/postgres
+      → postgresql+psycopg://postgres:pw@aws-<region>.pooler.supabase.com:6543/postgres?sslmode=require
+    region が不明な場合は None を返す。
+    """
+    if not region:
+        return None
+    p = urlparse(url)
+    if not p.hostname or ".supabase.co" not in p.hostname:
+        return None
+    # ホストをプーラーに差し替え、ポートを6543へ
+    host = f"aws-{region}.pooler.supabase.com"
+    netloc = p.netloc
+    # netloc は "user:pass@host:port" 形式。host部分だけ差し替え。
+    # 安全のため、urlunparseを使うために各構成要素を再構築
+    username = p.username or ""
+    password = p.password or ""
+    auth = username
+    if password:
+        auth += f":{password}"
+    if auth:
+        auth += "@"
+    new_netloc = f"{auth}{host}:6543"
+    new_url = urlunparse(p._replace(netloc=new_netloc))
+    return _ensure_sslmode(new_url)
+
+
 # SQLAlchemy for direct DB operations
 def get_db_url():
+    # 1) 優先: プーラーURLが別途指定されている場合
+    if getattr(settings, "database_url_pooler", ""):
+        pooler_url = _ensure_sslmode(settings.database_url_pooler)
+        try:
+            test_engine = create_engine(pooler_url)
+            test_engine.connect().close()
+            return pooler_url
+        except Exception as e:
+            print(f"Supabase Pooler接続失敗、次の選択肢を試行: {e}")
+
+    # 2) USE_SUPABASE_POOLER=1 かつ直結URLが与えられている場合、プーラーURLを生成して試行
+    if settings.database_url and _is_truthy_env("USE_SUPABASE_POOLER"):
+        pooler_url = _build_pooler_url_from_direct(settings.database_url, getattr(settings, "supabase_region", "") or None)
+        if pooler_url:
+            try:
+                test_engine = create_engine(pooler_url)
+                test_engine.connect().close()
+                return pooler_url
+            except Exception as e:
+                print(f"自動生成したPooler接続失敗、直結/SQLiteへフォールバック: {e}")
+
+    # 3) 従来の database_url を試行
     if settings.database_url and not settings.database_url.startswith('postgresql+psycopg://postgres:your_'):
         try:
-            # PostgreSQL接続をテスト
             test_engine = create_engine(settings.database_url)
             test_engine.connect().close()
             return settings.database_url
         except Exception as e:
             print(f"PostgreSQL接続失敗、SQLiteを使用: {e}")
-    # デフォルトのURL（テスト用）
+
+    # 4) デフォルトのURL（テスト用）
     return "sqlite:///./test.db"
 
 engine = create_engine(get_db_url())
@@ -108,3 +174,9 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def get_supabase_client() -> Client:
+    """Supabaseクライアントを取得"""
+    if supabase is None:
+        raise RuntimeError("Supabase client not initialized")
+    return supabase

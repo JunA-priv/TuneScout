@@ -4,79 +4,126 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TuneScout - 認証</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/@supabase/auth-ui-web@0.4.2/dist/index.umd.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/@supabase/auth-ui-web@0.4.2/dist/index.css" />
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .auth-container {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-width: 400px;
-            width: 100%;
-        }
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo h1 {
-            color: #333;
-            margin: 0;
-            font-size: 28px;
-        }
-        .logo p {
-            color: #666;
-            margin: 5px 0 0 0;
-            font-size: 14px;
-        }
-    </style>
+    <!-- Supabase Auth UI(Web) は利用可能ですが、ここではカスタムUIで統一 -->
+  <link rel="stylesheet" href="/static/styles.css" />
+  <style>
+    .shell{max-width:560px}
+    .auth-wrap{max-width:560px;margin:0 auto}
+    .topbar{justify-content:center}
+    .tabs{display:flex;gap:6px;margin:10px 0 16px}
+    .tab{flex:1;padding:10px;border:0;border-radius:10px;cursor:pointer;background:var(--glass);color:var(--text)}
+    .tab.active{background:linear-gradient(135deg,var(--brand-1),var(--brand-2));color:#0b1020;font-weight:700}
+    .form-group{margin-bottom:12px}
+    label{display:block;margin-bottom:6px}
+    input{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:var(--text)}
+  </style>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="logo">
-            <h1>🎵 TuneScout</h1>
-            <p>音楽発掘レコメンドシステム</p>
+  <main class="shell">
+    <header class="panel topbar auth-wrap">
+      <div class="brand">
+        <img src="/static/logo.svg" alt="" onerror="this.style.display='none'"/>
+        <span>🎵 TuneScout</span>
+      </div>
+      <button id="theme-toggle" class="icon-btn" type="button" aria-pressed="false"><span aria-hidden="true">🌗</span><span class="label">ダーク</span></button>
+    </header>
+    <section class="panel wrap auth-wrap auth-panel">
+      <div class="center" style="margin-bottom:14px">
+        <h1 style="margin:0 0 6px">ログイン / 新規登録</h1>
+        <p class="muted jp-keep" style="margin:0">音楽発掘レコメンドシステム</p>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="showForm('login', event)">ログイン</button>
+        <button class="tab" onclick="showForm('register', event)">新規登録</button>
+      </div>
+      <div id="auth-container" class="auth-container">
+        <div id="login-form">
+          <div class="form-group">
+            <label for="login-email">メールアドレス</label>
+            <input type="email" id="login-email" required />
+          </div>
+          <div class="form-group">
+            <label for="login-password">パスワード</label>
+            <input type="password" id="login-password" required />
+          </div>
+          <button class="btn-primary" onclick="handleLogin(event)">ログイン</button>
         </div>
-        <div id="auth-container"></div>
-    </div>
+        <div id="register-form" style="display:none;">
+          <div class="form-group">
+            <label for="register-email">メールアドレス</label>
+            <input type="email" id="register-email" required />
+          </div>
+          <div class="form-group">
+            <label for="register-password">パスワード</label>
+            <input type="password" id="register-password" required />
+          </div>
+          <button class="btn-primary" onclick="handleRegister(event)">新規登録</button>
+        </div>
+      </div>
+    </section>
+  </main>
 
     <script>
         const { createClient } = supabase;
-        
-        const supabaseClient = createClient(
-            '{{ supabase_url }}',
-            '{{ supabase_key }}'
-        );
+        const supabaseClient = createClient('{{ supabase_url }}', '{{ supabase_key }}');
 
-        document.getElementById('auth-container').innerHTML = `
-            <div style="text-align: center; padding: 20px;">
-                <p>認証システムを準備中です...</p>
-                <p><a href="/dashboard" style="color: #667eea; text-decoration: none;">ダッシュボードへ進む</a></p>
-            </div>
-        `;
+        function showForm(type, ev){
+          if (ev) ev.preventDefault();
+          document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+          if (ev) ev.target.classList.add('active');
+          document.getElementById('login-form').style.display = (type==='login')? 'block':'none';
+          document.getElementById('register-form').style.display = (type==='register')? 'block':'none';
+        }
 
-        // 認証状態の監視
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN') {
-                console.log('User signed in:', session.user);
-                // ダッシュボードにリダイレクト
-                window.location.href = '/dashboard';
-            }
-            if (event === 'SIGNED_OUT') {
-                console.log('User signed out');
-            }
+        async function handleLogin(ev){
+          ev.preventDefault();
+          const email = (document.getElementById('login-email')).value;
+          const password = (document.getElementById('login-password')).value;
+          try{
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            window.location.href = '/dashboard';
+          }catch(err){ alert('ログインエラー: '+ err.message); }
+        }
+
+        async function handleRegister(ev){
+          ev.preventDefault();
+          const email = (document.getElementById('register-email')).value;
+          const password = (document.getElementById('register-password')).value;
+          try{
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) throw error;
+            if (data.user && !data.user.email_confirmed_at) {
+              alert('登録しました！確認メールをチェックしてください。');
+            } else { alert('登録が完了しました！'); }
+          }catch(err){ alert('登録エラー: '+ err.message); }
+        }
+
+        // 既存セッションがあればダッシュボードへ
+        (async ()=>{
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          if (session) window.location.href = '/dashboard';
+        })();
+    </script>
+    <script>
+      (function(){
+        const KEY='ts-theme';
+        function apply(t){
+          document.documentElement.setAttribute('data-theme',t);
+          const b=document.getElementById('theme-toggle');
+          if(b){const d=t==='dark';b.setAttribute('aria-pressed',String(d));const l=b.querySelector('.label');if(l)l.textContent=d?'ライト':'ダーク';}
+        }
+        const saved=localStorage.getItem(KEY);
+        const prefers=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+        apply(saved||(prefers?'dark':'light'));
+        document.addEventListener('DOMContentLoaded',()=>{
+          const b=document.getElementById('theme-toggle');
+          if(!b) return;
+          b.addEventListener('click',()=>{const cur=document.documentElement.getAttribute('data-theme')||'light';const nxt=cur==='dark'?'light':'dark';localStorage.setItem(KEY,nxt);apply(nxt);});
         });
+      })();
     </script>
 </body>
 </html>

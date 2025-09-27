@@ -1,4 +1,5 @@
 import asyncio
+import os
 import schedule
 import time
 from datetime import datetime
@@ -32,14 +33,51 @@ def run_daily_sync():
     asyncio.run(daily_artist_sync())
 
 def start_scheduler():
-    """スケジューラーを開始（毎日午前9時に実行）"""
-    schedule.every().day.at("09:00").do(run_daily_sync)
-    
-    print("スケジューラーを開始しました（毎日09:00に実行）")
-    
+    """スケジューラーを開始し、定期ジョブを登録"""
+    # --- Spotify リリース同期（既存ジョブ） ---
+    enable_spotify_sync = os.getenv("ENABLE_SPOTIFY_SYNC", "1").lower() not in {"0", "false", "no"}
+    spotify_at = os.getenv("SPOTIFY_SYNC_AT", "09:00")
+    if enable_spotify_sync:
+        try:
+            schedule.every().day.at(spotify_at).do(run_daily_sync)
+            print(f"Spotify同期ジョブを登録: 毎日 {spotify_at}")
+        except Exception as e:
+            print(f"Spotify同期ジョブ登録エラー: {e}")
+
+    # --- スクレイピング実行（新規ジョブ） ---
+    enable_scraping = os.getenv("ENABLE_SCRAPING", "1").lower() not in {"0", "false", "no"}
+    scrape_every_minutes = os.getenv("SCRAPE_EVERY_MINUTES")
+    scrape_at = os.getenv("SCRAPE_AT") or os.getenv("SCHEDULE_SCRAPING_AT") or "03:00"
+
+    if enable_scraping:
+        try:
+            if scrape_every_minutes:
+                interval = int(scrape_every_minutes)
+                schedule.every(interval).minutes.do(run_scraping)
+                print(f"スクレイピングジョブを登録: {interval}分ごと")
+            else:
+                schedule.every().day.at(scrape_at).do(run_scraping)
+                print(f"スクレイピングジョブを登録: 毎日 {scrape_at}")
+        except Exception as e:
+            print(f"スクレイピングジョブ登録エラー: {e}")
+
+    print("スケジューラーを開始しました（登録済みジョブを定期実行）")
+
     while True:
         schedule.run_pending()
         time.sleep(60)  # 1分ごとにチェック
 
 if __name__ == "__main__":
     start_scheduler()
+
+def run_scraping() -> None:
+    """スクレイピング処理を実行（各会場のスクレイパー）"""
+    print(f"[{datetime.now()}] スクレイピングを開始...")
+    try:
+        # 遅延インポート：環境によっては src を sys.path へ追加している想定
+        from tunescout.artist_discovery_main import main as scrape_main
+
+        scrape_main()
+        print(f"[{datetime.now()}] スクレイピング完了")
+    except Exception as e:
+        print(f"[{datetime.now()}] スクレイピングエラー: {e}")
